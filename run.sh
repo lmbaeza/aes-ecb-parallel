@@ -1,0 +1,1 @@
+g++ -Wshadow -Wall -Wextra -Wconversion -O2 --std=c++17 -o aes aes.cpp && ./aes
