@@ -1,5 +1,20 @@
-# aes-ecb-parallel
-Aes ECB Mode Parallel
+# Aes Modo ECB
+
+Paralelizar el ModoECB del aes
+
+----
+
+**Universidad Nacional de Colombia - Sede Bogotá**
+
+ _**Computación Paralela**_
+
+ **Docente:**   César Pedraza Bonilla
+
+ **Estudiantes:**
+ * Luis Miguel Báez Aponte - lmbaeza@unal.edu.co
+ * Bryan David Velandia Parada - bdvelandiap@unal.edu.co
+ * Camilo Ernesto Vargas Romero - camevargasrom@unal.edu.co
+
 
 # Descargar
 
