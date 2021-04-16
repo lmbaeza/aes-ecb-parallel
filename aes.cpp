@@ -448,6 +448,10 @@ int main() {
         Decript.push_back(dec);
 
         print_hex_array(cipher);
+        // Out:
+        // 4d f9 f5 5c 18 7c 8e 43 4c 3c 51 e1 f5 ef 1d d6 
+        // 2d cf d7 8d 48 16 bc 69 ab 0a 31 72 66 96 e2 aa 
+        // ec 95 8d 26 80 f6 9d 08 49 0b 9b eb b6 af 0e f1 
     }
 
     cout << "\nDecript Text: ";
@@ -457,12 +461,7 @@ int main() {
         }
     }
     cout << endl;
-
     // Out:
-    // 4d f9 f5 5c 18 7c 8e 43 4c 3c 51 e1 f5 ef 1d d6 
-    // 2d cf d7 8d 48 16 bc 69 ab 0a 31 72 66 96 e2 aa 
-    // ec 95 8d 26 80 f6 9d 08 49 0b 9b eb b6 af 0e f1 
-
     // Decript Text: Este es un mensaje de prueba para el aes 256
 
     return 0;
