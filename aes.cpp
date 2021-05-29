@@ -1,6 +1,13 @@
 // from https://github.com/SergeyBel/AES/blob/master/src/AES.cpp
 
 #include <bits/stdc++.h>
+#include<vector>
+#include<iostream>
+#include<string>
+#include<cstdint>
+#include<cstring>
+#include<cassert>
+
 using namespace std;
 
 using uint = uint32_t; 
@@ -430,6 +437,9 @@ int main() {
 
     string text = "Este es un mensaje de prueba para el aes 256";
     string key = "admin1234"; // maximo 32 caracteres
+
+    cout << "Text: " << text << endl;
+    cout << "Key: " << key << endl << endl;
 
     vector<vector<uint8>> text_hex = text_to_hex(text);
     vector<uint8> key_hex = key_to_hex(key);
