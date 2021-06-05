@@ -1,6 +1,6 @@
-# Aes Modo ECB
+# Aes Modo ECB & CTR
 
-Paralelizar el ModoECB del aes
+Paralelizar el Modo ECB & CTR del aes
 
 ----
 
@@ -32,6 +32,18 @@ $ sudo chmod 777 run.sh
 
 # Ejecutar
 
+### Ejecutar `aes.cpp`
 ```shell
 $ ./run.sh
+```
+
+### Ejecutar `aes_ecb_posix.cpp`
+```shell
+$ ./run.sh --ecb-posix
+```
+
+### Ejecutar `aes_ecb_openmp.cpp`
+
+```shell
+$ ./run.sh --ecb-openmp
 ```
