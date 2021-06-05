@@ -43,7 +43,7 @@ $ ./run.sh --ecb-posix
 ```
 
 ### Ejecutar `aes_ecb_openmp.cpp`
-
+⚠️ _TODO_
 ```shell
 $ ./run.sh --ecb-openmp
 ```
