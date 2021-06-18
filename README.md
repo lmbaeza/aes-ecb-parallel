@@ -32,18 +32,14 @@ $ sudo chmod 777 run.sh
 
 # Ejecutar
 
-### Ejecutar `aes.cpp`
-```shell
-$ ./run.sh
-```
-
 ### Ejecutar `aes_ecb_posix.cpp`
+
 ```shell
 $ ./run.sh --ecb-posix
 ```
 
 ### Ejecutar `aes_ecb_openmp.cpp`
-⚠️ _TODO_
+
 ```shell
 $ ./run.sh --ecb-openmp
 ```
