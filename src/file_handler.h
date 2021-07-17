@@ -1,4 +1,14 @@
-using uint = uint32_t; 
+#ifndef FILE_HANDLER
+#define FILE_HANDLER
+
+#include<iostream>
+#include<fstream>
+#include<string>
+#include<vector>
+#include<cstdint>
+using namespace std;
+
+using uint = uint32_t;
 using uint8 = uint8_t;
 
 void write_file(const string &filename, vector<vector<uint8>> &data) {
@@ -20,6 +30,17 @@ void write_file(const string &filename, vector<vector<uint8>> &data) {
     file.close();
 }
 
+void write_file_string(const string &filename, const string &data) {
+    ofstream file;
+    file.open(filename);
+    if(!file) {
+        cout << "No se puedo abrir el archivo: \"" << filename << "\"" << endl;
+        exit(1);
+    }
+    file << data;
+    file.close();
+}
+
 void read_file_to_string(const string &filename, string &text) {
     ifstream input;
     input.open(filename);
@@ -30,3 +51,4 @@ void read_file_to_string(const string &filename, string &text) {
         text += line;
     }
 }
+#endif

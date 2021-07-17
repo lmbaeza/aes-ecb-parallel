@@ -40,3 +40,6 @@ aes_ctr_openmp
 # VsCode
 .cph/
 .vscode/
+
+# TextPlain
+*.txt

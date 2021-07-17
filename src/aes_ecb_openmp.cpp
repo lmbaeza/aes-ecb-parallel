@@ -5,6 +5,7 @@
 #include<cstdint>
 #include<cstring>
 #include<cassert>
+#include<fstream>
 
 // Headers for Posix
 #include <unistd.h>
