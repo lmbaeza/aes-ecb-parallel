@@ -1,4 +1,4 @@
-%%writefile cuda_sample.cu
+// %%writefile cuda_sample.cu
 #include <stdio.h>
 
 #include<vector>

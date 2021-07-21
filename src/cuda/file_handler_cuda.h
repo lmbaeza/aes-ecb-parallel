@@ -1,4 +1,4 @@
-%%writefile file_handler_cuda.h
+// %%writefile file_handler_cuda.h
 #ifndef FILE_HANDLER
 #define FILE_HANDLER
 
