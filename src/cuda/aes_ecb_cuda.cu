@@ -1,4 +1,4 @@
-// %%writefile cuda_sample.cu
+// %%writefile aes_ecb_cuda.cu
 #include <stdio.h>
 
 #include<vector>
@@ -76,6 +76,8 @@ void build_ranges(int text_size) {
         intervalo[i][0] = current;
         intervalo[i][1] = current+length[i]-1;
         current = current + length[i];
+
+        printf("[%d, %d]\n", intervalo[i][0], intervalo[i][1]);
     }
     intervalo[NUM_HILOS-1][1] = blocks-1;
 }
@@ -98,7 +100,13 @@ void kernel(int (*k_intervalo)[2], uint8 (*k_cipher_text)[BLOCKS_SIZE], uint8 (*
             for(int j = 0; j < BLOCKS_SIZE; ++j) {
                 k_cipher_text[i][j] = cipher[j];
             }
+
+            /*
+            if(i % 1000 == 0) {
+                printf("\nGPU RUNNING=%d i=%d\n", ID, i);
+            }*/
         }
+        printf("\nGPU END=%d\n", ID);
         // k_cipher_text vá a ser el unico modificado
     }
 }
@@ -167,8 +175,8 @@ int main(int argc, char **argv) {
 
     cudaMemcpy(d_blocks, &blocks,  sizeof(int), cudaMemcpyHostToDevice);
     
-    kernel<<<NUM_HILOS, 1>>>(d_intervalo, d_cipher_text, d_text_hex, d_key_hex, d_aes, d_blocks);
-    cudaDeviceSynchronize();
+    kernel<<<32, 32>>>(d_intervalo, d_cipher_text, d_text_hex, d_key_hex, d_aes, d_blocks);
+    // cudaDeviceSynchronize();
 
     cudaMemcpy(cipher_text, d_cipher_text, blocks*BLOCKS_SIZE*sizeof(uint8), cudaMemcpyDeviceToHost);
 
