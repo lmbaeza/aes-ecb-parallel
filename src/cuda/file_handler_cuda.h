@@ -33,13 +33,14 @@ void write_file(const string &filename, uint8 (*data)[16], int x) {
 }
 
 void read_file_to_string(const string &filename, string &text) {
-    ifstream input;
-    input.open(filename);
-    text.reserve(1e8);
-
-    string line;
-    while(getline(input, line)) {
-        text += line;
+    int c;
+    FILE *file;
+    file = fopen(filename.c_str(), "r");
+    if (file) {
+        while ((c = getc(file)) != EOF) {
+            text.push_back((char) c);
+        }
+        fclose(file);
     }
 }
 
