@@ -26,34 +26,31 @@ int *pArgc = NULL;
 char** pArgv = NULL;
 
 // el i-th hilo procesa el intervalo, [from, to]
-int** intervalo;
+int (*intervalo)[2];
 
 // texto dividido en bloques: la i-th posicion tiene el i-th bloque
-uint8** text_hex = NULL;
+uint8 (*text_hex)[BLOCKS_SIZE] = NULL;
 
 // bloque de 32 posiciones que representa la llave
 uint8* key_hex = NULL;
 
 // Mensaje encriptado: la i-th posicion tiene el i-th bloque
-uint8** cipher_text = NULL;
+uint8 (*cipher_text)[BLOCKS_SIZE] = NULL;
 
 // Instancia global del AES
 
 int blocks;
 
-__device__
-int d_blocks;
-
-__device__
-const int blocks_size = 16;
+// __device__
+// int d_blocks;
 
 void build_hex(string &text, string &key) {
     int n = (int) text.size();
-    blocks = (n+blocks_size-1)/blocks_size;
+    blocks = (n+BLOCKS_SIZE-1)/BLOCKS_SIZE;
 
-    text_hex = new uint8*[blocks];
-    for(int i = 0; i < blocks; ++i)
-        text_hex[i] = new uint8[blocks_size];
+    text_hex = new uint8[blocks][BLOCKS_SIZE];
+    // for(int i = 0; i < blocks; ++i)
+    //     text_hex[i] = new uint8[BLOCKS_SIZE];
 
     text_to_hex(text, text_hex);
 
@@ -63,28 +60,22 @@ void build_hex(string &text, string &key) {
 }
 
 void build_ranges(int text_size) {
-    // host
-
-    printf("1");
-    intervalo = new int*[NUM_HILOS];
+    intervalo = new int[NUM_HILOS][2];
     for(int i = 0; i < NUM_HILOS; ++i) {
-        intervalo[i] = new int[2];
+        // intervalo[i] = new int[2];
         intervalo[i][0] = 0;
         intervalo[i][1] = 0;
     }
-    printf("2");
-    // device
     
-    for(int i = 0; i < NUM_HILOS; ++i) {
-        intervalo[i] = (int *) malloc(2*sizeof(int));
-        intervalo[i][0] = 0;
-        intervalo[i][1] = 0;
-    }
+    // for(int i = 0; i < NUM_HILOS; ++i) {
+    //     intervalo[i] = (int *) malloc(2*sizeof(int));
+    //     intervalo[i][0] = 0;
+    //     intervalo[i][1] = 0;
+    // }
 
     blocks = (text_size+32-1)/32;
     
-    printf("3");
-    cipher_text = new uint8*[blocks];
+    cipher_text = new uint8[blocks][BLOCKS_SIZE];
 
     // Crear Intervalos
     int len = blocks/NUM_HILOS;
@@ -103,21 +94,40 @@ void build_ranges(int text_size) {
 
 
 __global__ 
-void kernel(int** k_intervalo, uint8** k_cipher_text, uint8** k_text_hex, uint8* k_key_hex, AES* aes) {
+void kernel(int (*k_intervalo)[2], uint8 (*k_cipher_text)[BLOCKS_SIZE], uint8 (*k_text_hex)[BLOCKS_SIZE], uint8* k_key_hex, AES* aes, int * d_blocks) {
     int ID = blockIdx.x * blockDim.x + threadIdx.x;
-    if (ID < d_blocks) {
+
+    printf("\nGPU ID=%d blocks=%d", ID, (*d_blocks));
+
+    if (ID < (*d_blocks)) {
+
+        printf(" -- Inside ID=%d\n", ID);
         int from = k_intervalo[ID][0];
         int to = k_intervalo[ID][1];
+        
+        printf("\nGPU from=%d to=%d\n", from, to);
 
         for(int i = from; i <= to; ++i) {
+            printf("GPU #1\n");
             uint len = 0;
+            printf("GPU #2\n");
             uint8* cipher = aes->EncryptECB(k_text_hex[i], 16 * sizeof(uint8), k_key_hex, len);
-            k_cipher_text[i] = cipher;
+            printf("GPU #3\n");
+            for(int j = 0; j < BLOCKS_SIZE; ++j) {
+                k_cipher_text[i][j] = cipher[j];
+            }
+            //k_cipher_text[i] = cipher;
+
+            printf("GPU: ");
+            for(int j = 0; j < 16; ++j) {
+                uint8 val = k_cipher_text[i][j];
+                printf("%02x ", val);
+            }
+            printf("\n");
         }
         // k_cipher_text vá a ser el unico modificado
     }
 }
-
 
 int main(int argc, char **argv) {   
     pArgc = &argc;
@@ -137,46 +147,38 @@ int main(int argc, char **argv) {
     // Numero de hilos utilizados
     NUM_HILOS = atoi(pArgv[3]);
  
-    printf("%s %s %d", NOMBRE_ARCHIVO.c_str(), ARCHIVO_SALIDA.c_str(), NUM_HILOS);
+    printf("%s %s %d\n", NOMBRE_ARCHIVO.c_str(), ARCHIVO_SALIDA.c_str(), NUM_HILOS);
 
     string text;
     string key = "admin1234"; // maximo 32 caracteres
 
     // Leer el texto que se vá a encriptar
     read_file_to_string(NOMBRE_ARCHIVO, text);
+
+    text = "12345343243534534564365656546546";
+    printf("Text: [%s]\n", text.c_str());
     
     build_hex(text, key);
 
     // Crear los rangos donde van a trabajar lso
-
-    printf("\n\n");
     build_ranges((int) text.size());
 
-    printf("[%d]", blocks);
 
-    int** d_intervalo;
-    cudaMalloc(&d_intervalo, NUM_HILOS*sizeof(int));
-    cudaMemcpy(d_intervalo, intervalo, NUM_HILOS*sizeof(int), cudaMemcpyHostToDevice);
-
-    /////////////////////////
-
-    // for(int i = 0; i < blocks; ++i) {
-    //     uint len = 0;
-    //     uint8* cipher = aes.EncryptECB(text_hex[i], BLOCK_BYTES_LENGTH, key_hex, len);
-    //     cipher_text[i] = cipher;
-    // }
+    int (*d_intervalo)[2];
+    cudaMalloc(&d_intervalo, NUM_HILOS*2*sizeof(int));
+    cudaMemcpy(d_intervalo, intervalo, NUM_HILOS*2*sizeof(int), cudaMemcpyHostToDevice);
 
     // cipher_text
-    uint8** d_cipher_text;
-    cudaMalloc(&d_cipher_text, blocks*sizeof(uint8));
-    cudaMemcpy(d_cipher_text, cipher_text,  blocks*sizeof(uint8), cudaMemcpyHostToDevice);
+    uint8 (*d_cipher_text)[BLOCKS_SIZE];
+    cudaMalloc(&d_cipher_text, blocks*BLOCKS_SIZE*sizeof(uint8));
+    cudaMemcpy(d_cipher_text, cipher_text,  blocks*BLOCKS_SIZE*sizeof(uint8), cudaMemcpyHostToDevice);
 
     // text_hex
-    uint8** d_text_hex;
-    cudaMalloc(&d_text_hex, blocks*sizeof(uint8));
-    for(int i = 0; i < blocks; ++i)
-        cudaMalloc(&d_text_hex[i], blocks_size*sizeof(uint8));
-    cudaMemcpy(d_text_hex, text_hex,  blocks*sizeof(uint8), cudaMemcpyHostToDevice);
+    uint8 (*d_text_hex)[BLOCKS_SIZE];
+    // float (*d_C)[N];
+    cudaMalloc((void**)(&d_text_hex), blocks*BLOCKS_SIZE*sizeof(uint8));
+
+    cudaMemcpy(d_text_hex, text_hex,  blocks*BLOCKS_SIZE*sizeof(uint8), cudaMemcpyHostToDevice);
 
     // key_hex
     uint8* d_key_hex = NULL;
@@ -188,17 +190,32 @@ int main(int argc, char **argv) {
     cudaMalloc(&d_aes, sizeof(AES));
     cudaMemcpy(d_aes, &aes,  sizeof(AES), cudaMemcpyHostToDevice);
 
+    printf("CPU blocks=%d\n", blocks);
+
+    int *d_blocks;
+    cudaMalloc(&d_blocks, sizeof(int));
+
+    cudaMemcpy(d_blocks, &blocks,  sizeof(int), cudaMemcpyHostToDevice);
     
+    kernel<<<1, 1>>>(d_intervalo, d_cipher_text, d_text_hex, d_key_hex, d_aes, d_blocks);
+    cudaDeviceSynchronize();
 
-    cudaMemcpy(&d_blocks, &blocks,  sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemcpy(cipher_text, d_cipher_text, blocks*BLOCKS_SIZE*sizeof(uint8), cudaMemcpyDeviceToHost);
 
-    kernel<<<100, 100>>>(d_intervalo, d_cipher_text, d_text_hex, d_key_hex, d_aes);
+    // write_file(ARCHIVO_SALIDA, cipher_text, blocks, 16);
 
-    cudaMemcpy(cipher_text, d_cipher_text, blocks*sizeof(uint8), cudaMemcpyDeviceToHost);
+    printf("###################################\n");
 
-    write_file(ARCHIVO_SALIDA, cipher_text, blocks, 16);
-
-    printf("\n###################################\n");
+    for(int i = 0; i < blocks; ++i) {
+        for(int j = 0; j < 16; ++j) {
+            uint8 val = cipher_text[i][j];
+            if(val < 16) cout << '0';
+            cout << hex << (int) val;
+        }
+        cout << '\n';
+    }
 
     return 0;
 }
+
+// 78cdb9aa782851e8502e5d8da6927b25

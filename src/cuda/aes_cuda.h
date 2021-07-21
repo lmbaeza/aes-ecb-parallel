@@ -1,5 +1,4 @@
 %%writefile aes_cuda.h
-
 #ifndef _AES_H_
 #define _AES_H_
 
@@ -13,6 +12,8 @@ using namespace std;
 
 using uint = uint32_t; 
 using uint8 = uint8_t;
+
+#define BLOCKS_SIZE 16
 
 class AES {
 private:
@@ -658,7 +659,7 @@ void AES::printHexArray (uint8 a[], uint n) {
     }
 }
 
-void text_to_hex(const string &text, uint8** out) {
+void text_to_hex(const string &text, uint8 (*out)[BLOCKS_SIZE]) {
     int n = (int) text.size();
 
     int idx_block = 0;
@@ -678,7 +679,7 @@ void key_to_hex(const string &key, uint8* key_hex) {
     assert(0 <= n && n <= 32);
     for(int i = 0; i < n; ++i) {
         key_hex[i] = uint8(key[i]);
-        printf(" %02x ", key_hex[i]);
+        // printf(" %02x ", key_hex[i]);
     }
 }
 

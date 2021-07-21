@@ -1,3 +1,4 @@
+%%writefile file_handler_cuda.h
 #ifndef FILE_HANDLER
 #define FILE_HANDLER
 
@@ -11,7 +12,7 @@ using namespace std;
 using uint = uint32_t;
 using uint8 = uint8_t;
 
-void write_file(const string &filename, uint8** data, int x, int y) {
+void write_file(const string &filename, uint8 (*data)[16], int x) {
     ofstream file;
     file.open(filename);
     if(!file) {
@@ -21,7 +22,7 @@ void write_file(const string &filename, uint8** data, int x, int y) {
 
     // Escribir el texto encriptado en el archivo filename
     for(int i = 0; i < x; ++i) {
-        for(int j = 0; j < y; ++j) {
+        for(int j = 0; j < 16; ++j) {
             uint8 val = data[i][j];
             if(val < 16) file << '0';
             file << hex << (int) val;
