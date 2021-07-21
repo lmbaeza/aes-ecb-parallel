@@ -9,6 +9,8 @@
 #include<cassert>
 #include<fstream>
 
+#include <sys/time.h>
+
 #include <cuda_runtime.h>
 
 #include "aes_cuda.h"
@@ -77,7 +79,7 @@ void build_ranges(int text_size) {
         intervalo[i][1] = current+length[i]-1;
         current = current + length[i];
 
-        printf("[%d, %d]\n", intervalo[i][0], intervalo[i][1]);
+        //printf("[%d, %d]\n", intervalo[i][0], intervalo[i][1]);
     }
     intervalo[NUM_HILOS-1][1] = blocks-1;
 }
@@ -100,11 +102,6 @@ void kernel(int (*k_intervalo)[2], uint8 (*k_cipher_text)[BLOCKS_SIZE], uint8 (*
             for(int j = 0; j < BLOCKS_SIZE; ++j) {
                 k_cipher_text[i][j] = cipher[j];
             }
-
-            /*
-            if(i % 1000 == 0) {
-                printf("\nGPU RUNNING=%d i=%d\n", ID, i);
-            }*/
         }
         printf("\nGPU END=%d\n", ID);
         // k_cipher_text vá a ser el unico modificado
@@ -175,10 +172,22 @@ int main(int argc, char **argv) {
 
     cudaMemcpy(d_blocks, &blocks,  sizeof(int), cudaMemcpyHostToDevice);
     
+    // Medir Tiempo de Ejecución
+    struct timeval tval_before, tval_after, tval_result;
+ 
+    gettimeofday(&tval_before, NULL);
+
     kernel<<<32, 32>>>(d_intervalo, d_cipher_text, d_text_hex, d_key_hex, d_aes, d_blocks);
     // cudaDeviceSynchronize();
 
+    gettimeofday(&tval_after, NULL);
+ 
+    timersub(&tval_after, &tval_before, &tval_result);
+
     cudaMemcpy(cipher_text, d_cipher_text, blocks*BLOCKS_SIZE*sizeof(uint8), cudaMemcpyDeviceToHost);
+ 
+    printf("\nTime elapsed: %ld.%06ld using %d threads\n", (long int) tval_result.tv_sec, (long int) tval_result.tv_usec, NUM_HILOS);
+    fflush(stdout);
 
     write_file(ARCHIVO_SALIDA, cipher_text, blocks);
 
