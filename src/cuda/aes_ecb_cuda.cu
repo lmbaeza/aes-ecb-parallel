@@ -136,7 +136,8 @@ int main(int argc, char **argv) {
 
     // Medir Tiempo de Ejecución
     struct timeval tval_before, tval_after, tval_result;
-
+    gettimeofday(&tval_before, NULL);
+    
     // Leer el texto que se vá a encriptar
     read_file_to_string(NOMBRE_ARCHIVO, text);
 
@@ -176,8 +177,6 @@ int main(int argc, char **argv) {
     cudaMalloc(&d_blocks, sizeof(int));
 
     cudaMemcpy(d_blocks, &blocks,  sizeof(int), cudaMemcpyHostToDevice);
- 
-    gettimeofday(&tval_before, NULL);
 
     kernel<<<BLOQUES_GPU, HILOS_GPU>>>(d_intervalo, d_cipher_text, d_text_hex, d_key_hex, d_aes, d_blocks);
 
