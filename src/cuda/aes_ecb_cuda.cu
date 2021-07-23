@@ -1,4 +1,4 @@
-// %%writefile aes_ecb_cuda.cu
+%%writefile src/cuda/aes_ecb_cuda.cu
 #include <stdio.h>
 
 #include<vector>
@@ -86,6 +86,12 @@ void build_ranges(int text_size) {
     intervalo[NUM_HILOS-1][1] = blocks-1;
 }
 
+// ref: https://kth.instructure.com/courses/12406/pages/timing-your-kernel-cpu-timer-and-nvprof?module_item_id=169241
+double cpuSecond() {
+    struct timeval tp;
+    gettimeofday(&tp,NULL);
+    return ((double)tp.tv_sec + (double)tp.tv_usec*1.e-6);
+}
 
 __global__ 
 void kernel(int (*k_intervalo)[2], uint8 (*k_cipher_text)[BLOCKS_SIZE], uint8 (*k_text_hex)[BLOCKS_SIZE], uint8* k_key_hex, AES* aes, int * d_blocks) {
@@ -109,7 +115,7 @@ void kernel(int (*k_intervalo)[2], uint8 (*k_cipher_text)[BLOCKS_SIZE], uint8 (*
     }
 }
 
-int main(int argc, char **argv) {   
+int main(int argc, char **argv) {
     pArgc = &argc;
     pArgv = argv;
  
@@ -133,9 +139,6 @@ int main(int argc, char **argv) {
  
     string text;
     string key = "admin1234"; // maximo 32 caracteres
-
-    // Medir Tiempo de Ejecución
-    struct timeval tval_before, tval_after, tval_result;
 
     // Leer el texto que se vá a encriptar
     read_file_to_string(NOMBRE_ARCHIVO, text);
@@ -176,18 +179,18 @@ int main(int argc, char **argv) {
     cudaMalloc(&d_blocks, sizeof(int));
 
     cudaMemcpy(d_blocks, &blocks,  sizeof(int), cudaMemcpyHostToDevice);
- 
-    gettimeofday(&tval_before, NULL);
+
+    // Medir Tiempo de Ejecución
+    double start = cpuSecond();
 
     kernel<<<BLOQUES_GPU, HILOS_GPU>>>(d_intervalo, d_cipher_text, d_text_hex, d_key_hex, d_aes, d_blocks);
-
-    gettimeofday(&tval_after, NULL);
- 
-    timersub(&tval_after, &tval_before, &tval_result);
+    cudaDeviceSynchronize();
+    double stop = cpuSecond();
 
     cudaMemcpy(cipher_text, d_cipher_text, blocks*BLOCKS_SIZE*sizeof(uint8), cudaMemcpyDeviceToHost);
- 
-    printf("\nTime elapsed: %ld.%06ld using blocks_gpu=%d, threads_per_blocks=%d\n", (long int) tval_result.tv_sec, (long int) tval_result.tv_usec, BLOQUES_GPU, HILOS_GPU);
+
+    double time_elapsed = stop - start;
+    printf("\nTime elapsed: %.8f sec using blocks_gpu=%d, threads_per_blocks=%d\n", time_elapsed, BLOQUES_GPU, HILOS_GPU);
     fflush(stdout);
 
     write_file(ARCHIVO_SALIDA, cipher_text, blocks);
