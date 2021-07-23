@@ -1,3 +1,4 @@
+%%writefile run.sh
 if [ "$1" = "--ecb-posix" ]; then
     g++ -D_DEFAULT_SOURCE -fopenmp -lm -Ofast -std=c++17 -o aes_ecb_posix src/aes_ecb_posix.cpp
     g++ -std=c++17 -o generate_data src/generate_data.cpp
@@ -36,12 +37,11 @@ elif [ "$1" = "--cuda" ]; then
     g++ -Ofast -std=c++17 -o generate_data src/generate_data.cpp
     
     # Generar Datos
-    ./generate_data input.txt 8
+    ./generate_data input.txt 64
 
-
-    for ((BLOCKS_GPU = 8 ; BLOCKS_GPU <= 64 ; BLOCKS_GPU *= 2));
+    for ((BLOCKS_GPU = 1 ; BLOCKS_GPU <= 64 ; BLOCKS_GPU *= 2));
     do
-        for ((THREADS_PER_BLOCK = 8 ; THREADS_PER_BLOCK <= 64 ; THREADS_PER_BLOCK *= 2));
+        for ((THREADS_PER_BLOCK = 1; THREADS_PER_BLOCK <= 64 ; THREADS_PER_BLOCK *= 2));
         do
             # ./aes_cuda [archivo de entrada] [archivo de salida] [numero de bloques] [numero de hilos por bloque]
             ./aes_ecb_cuda input.txt output.bin "$BLOCKS_GPU" "$THREADS_PER_BLOCK"
