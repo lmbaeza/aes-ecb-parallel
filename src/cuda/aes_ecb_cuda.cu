@@ -22,6 +22,8 @@ string NOMBRE_ARCHIVO;
 string ARCHIVO_SALIDA;
 
 int NUM_HILOS;
+int BLOQUES_GPU;
+int HILOS_GPU;
 
 int *pArgc = NULL;
 
@@ -94,7 +96,7 @@ void kernel(int (*k_intervalo)[2], uint8 (*k_cipher_text)[BLOCKS_SIZE], uint8 (*
         int from = k_intervalo[ID][0];
         int to = k_intervalo[ID][1];
         
-        printf("\nGPU ID= %d blocks=%d from=%d to=%d\n", ID, (*d_blocks), from, to);
+        // printf("\nGPU ID= %d blocks=%d from=%d to=%d\n", ID, (*d_blocks), from, to);
 
         for(int i = from; i <= to; ++i) {
             uint len = 0;
@@ -103,8 +105,7 @@ void kernel(int (*k_intervalo)[2], uint8 (*k_cipher_text)[BLOCKS_SIZE], uint8 (*
                 k_cipher_text[i][j] = cipher[j];
             }
         }
-        printf("\nGPU END=%d\n", ID);
-        // k_cipher_text vá a ser el unico modificado
+        // printf("\nGPU END=%d\n", ID);
     }
 }
 
@@ -112,8 +113,8 @@ int main(int argc, char **argv) {
     pArgc = &argc;
     pArgv = argv;
  
-    if((*pArgc) < 4) {
-        printf("Debe proporcionar 3 argumentos: [archivo de entrada] [archivo de salida] [numero de hilos]");
+    if((*pArgc) < 5) {
+        printf("Debe proporcionar 3 argumentos: [archivo de entrada] [archivo de salida] [numero de bloques] [numero de hilos por bloque]");
         // Ejemplo: ./filtro.o img/input1.png img/output1.png 8 16
         exit(0);
     }
@@ -123,13 +124,18 @@ int main(int argc, char **argv) {
     // Ruta del texto cifrado: Ej: output.bin
     ARCHIVO_SALIDA = string(pArgv[2]);
 
-    // Numero de hilos utilizados
-    NUM_HILOS = atoi(pArgv[3]);
- 
-    printf("%s %s %d\n", NOMBRE_ARCHIVO.c_str(), ARCHIVO_SALIDA.c_str(), NUM_HILOS);
+    // Numero de bloques e hilos utilizados
 
+    BLOQUES_GPU = atoi(pArgv[3]);
+    HILOS_GPU = atoi(pArgv[4]);
+
+    NUM_HILOS = BLOQUES_GPU * HILOS_GPU;
+ 
     string text;
     string key = "admin1234"; // maximo 32 caracteres
+
+    // Medir Tiempo de Ejecución
+    struct timeval tval_before, tval_after, tval_result;
 
     // Leer el texto que se vá a encriptar
     read_file_to_string(NOMBRE_ARCHIVO, text);
@@ -140,7 +146,6 @@ int main(int argc, char **argv) {
 
     // Crear los rangos donde van a trabajar lso
     build_ranges((int) text.size());
-
 
     int (*d_intervalo)[2];
     cudaMalloc(&d_intervalo, NUM_HILOS*2*sizeof(int));
@@ -171,14 +176,10 @@ int main(int argc, char **argv) {
     cudaMalloc(&d_blocks, sizeof(int));
 
     cudaMemcpy(d_blocks, &blocks,  sizeof(int), cudaMemcpyHostToDevice);
-    
-    // Medir Tiempo de Ejecución
-    struct timeval tval_before, tval_after, tval_result;
  
     gettimeofday(&tval_before, NULL);
 
-    kernel<<<32, 32>>>(d_intervalo, d_cipher_text, d_text_hex, d_key_hex, d_aes, d_blocks);
-    // cudaDeviceSynchronize();
+    kernel<<<BLOQUES_GPU, HILOS_GPU>>>(d_intervalo, d_cipher_text, d_text_hex, d_key_hex, d_aes, d_blocks);
 
     gettimeofday(&tval_after, NULL);
  
@@ -186,12 +187,10 @@ int main(int argc, char **argv) {
 
     cudaMemcpy(cipher_text, d_cipher_text, blocks*BLOCKS_SIZE*sizeof(uint8), cudaMemcpyDeviceToHost);
  
-    printf("\nTime elapsed: %ld.%06ld using %d threads\n", (long int) tval_result.tv_sec, (long int) tval_result.tv_usec, NUM_HILOS);
+    printf("\nTime elapsed: %ld.%06ld using blocks_gpu=%d, threads_per_blocks=%d\n", (long int) tval_result.tv_sec, (long int) tval_result.tv_usec, BLOQUES_GPU, HILOS_GPU);
     fflush(stdout);
 
     write_file(ARCHIVO_SALIDA, cipher_text, blocks);
 
     return 0;
 }
-
-// 78cdb9aa782851e8502e5d8da6927b25

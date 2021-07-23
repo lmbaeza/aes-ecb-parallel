@@ -1,6 +1,6 @@
 # Aes Modo ECB & CTR
 
-Paralelizar el Modo ECB & CTR del aes
+Paralelizar el Modo ECB del aes
 
 ----
 
@@ -42,4 +42,25 @@ $ ./run.sh --ecb-posix
 
 ```shell
 $ ./run.sh --ecb-openmp
+```
+
+### Ejecutar `Cuda`
+
+```shell
+$ ./run.sh --cuda
+```
+O puede correrlo Manualmente
+
+```shell
+nvcc -o aes_ecb_cuda src/cuda/aes_ecb_cuda.cu 
+g++ -Ofast -std=c++17 -o generate_data src/generate_data.cpp
+./generate_data src/cuda/input.txt 16
+
+for ((BLOCKS_GPU = 8 ; BLOCKS_GPU <= 64 ; BLOCKS_GPU *= 2));
+do
+    for ((THREADS_PER_BLOCK = 8 ; THREADS_PER_BLOCK <= 64 ; THREADS_PER_BLOCK *= 2));
+    do
+        ./aes_ecb_cuda input.txt output.bin "$BLOCKS_GPU" "$THREADS_PER_BLOCK"
+    done
+done
 ```

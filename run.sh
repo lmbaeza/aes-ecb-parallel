@@ -36,13 +36,20 @@ elif [ "$1" = "--cuda" ]; then
     g++ -Ofast -std=c++17 -o generate_data src/generate_data.cpp
     
     # Generar Datos
-    ./generate_data src/cuda/input.txt 32
+    ./generate_data src/cuda/input.txt 8
 
-    # ./aes_cuda [archivo de entrada] [archivo de salida] [numero de hilos]
-    ./aes_ecb_cuda input.txt output.bin 1024
+
+    for ((BLOCKS_GPU = 8 ; BLOCKS_GPU <= 64 ; BLOCKS_GPU *= 2));
+    do
+        for ((THREADS_PER_BLOCK = 8 ; THREADS_PER_BLOCK <= 64 ; THREADS_PER_BLOCK *= 2));
+        do
+            # ./aes_cuda [archivo de entrada] [archivo de salida] [numero de bloques] [numero de hilos por bloque]
+            ./aes_ecb_cuda input.txt output.bin "$BLOCKS_GPU" "$THREADS_PER_BLOCK"
+        done
+    done
 
     # Clean
-    rm -f aes_cuda
+    rm -f aes_ecb_cuda
     rm -f generate_data
 
 elif [ "$1" = "--clean" ]; then
