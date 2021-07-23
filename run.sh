@@ -36,7 +36,7 @@ elif [ "$1" = "--cuda" ]; then
     g++ -Ofast -std=c++17 -o generate_data src/generate_data.cpp
     
     # Generar Datos
-    ./generate_data src/cuda/input.txt 8
+    ./generate_data input.txt 8
 
 
     for ((BLOCKS_GPU = 8 ; BLOCKS_GPU <= 64 ; BLOCKS_GPU *= 2));

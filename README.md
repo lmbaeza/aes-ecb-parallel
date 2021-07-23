@@ -54,7 +54,7 @@ O puede correrlo Manualmente
 ```shell
 nvcc -o aes_ecb_cuda src/cuda/aes_ecb_cuda.cu 
 g++ -Ofast -std=c++17 -o generate_data src/generate_data.cpp
-./generate_data src/cuda/input.txt 16
+./generate_data input.txt 16
 
 for ((BLOCKS_GPU = 8 ; BLOCKS_GPU <= 64 ; BLOCKS_GPU *= 2));
 do
