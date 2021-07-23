@@ -56,11 +56,11 @@ nvcc -o aes_ecb_cuda src/cuda/aes_ecb_cuda.cu
 g++ -Ofast -std=c++17 -o generate_data src/generate_data.cpp
 ./generate_data input.txt 16
 
-for ((BLOCKS_GPU = 8 ; BLOCKS_GPU <= 64 ; BLOCKS_GPU *= 2));
-do
-    for ((THREADS_PER_BLOCK = 8 ; THREADS_PER_BLOCK <= 64 ; THREADS_PER_BLOCK *= 2));
+for ((BLOCKS_GPU = 1 ; BLOCKS_GPU <= 64 ; BLOCKS_GPU *= 2));
     do
-        ./aes_ecb_cuda input.txt output.bin "$BLOCKS_GPU" "$THREADS_PER_BLOCK"
+        for ((THREADS_PER_BLOCK = 1; THREADS_PER_BLOCK <= 64 ; THREADS_PER_BLOCK *= 2));
+        do
+            ./aes_ecb_cuda input.txt output.bin "$BLOCKS_GPU" "$THREADS_PER_BLOCK"
+        done
     done
-done
 ```
