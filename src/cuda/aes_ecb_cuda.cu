@@ -1,4 +1,4 @@
-%%writefile src/cuda/aes_ecb_cuda.cu
+// %%writefile src/cuda/aes_ecb_cuda.cu
 #include <stdio.h>
 
 #include<vector>
