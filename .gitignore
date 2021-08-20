@@ -36,6 +36,7 @@ aes_ecb_posix
 aes_ecb_openmp
 aes_ctr_posix
 aes_ctr_openmp
+aes_ecb_mpi
 
 # VsCode
 .cph/

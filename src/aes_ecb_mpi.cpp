@@ -135,30 +135,9 @@ int main(int argc, char *argv[]) {
             // Enviar Limites
             MPI_Send(&(limits[0]), 3, MPI_INT, i, tag, MPI_COMM_WORLD);
 
-            printf("Root: limits from=%d, to=%d, len=%d\n", from, to, len);
-
             substring = substr_text(text, from, to);
             // Enviar texto a encriptar
             MPI_Send(&substring[0], 16*len, MPI_CHAR, i, tag, MPI_COMM_WORLD);
-        }
-
-        for(int i = 0; i < tasks; ++i) {
-            if(i == root)
-                continue;
-            // Recibir datos encriptados
-            from = intervalo[i].from;
-            to = intervalo[i].to;
-            len = to - from + 1;
-
-            substring = (char *) malloc(16 * len * sizeof(char));
-            
-
-            MPI_Recv(&substring[0], 16*len, MPI_CHAR, i, tag, MPI_COMM_WORLD, &status);
-
-            cipher_by_tasks[i].reserve(16*len);
-
-            for(int j = 0; j < 16*len; ++j)
-                cipher_by_tasks[i].push_back(substring[j]);
         }
 
         from = intervalo[root].from;
@@ -169,12 +148,6 @@ int main(int argc, char *argv[]) {
     if(is_root(current_id)) {
         // guardar los datos de substring, para ser procesados
         substring = substr_text(text, from, to);
-        printf("Root\n");
-
-        // for(int i = 0; i < 16*len; ++i) {
-        //     printf("%c", substring[i]);
-        // }
-        // printf("\n\n");
     } else if(is_node(current_id)) {
         // Recibir los Limites
         int limits[3];
@@ -183,8 +156,6 @@ int main(int argc, char *argv[]) {
         to = limits[1];
         len = limits[2];
 
-        printf("Node: limits from=%d, to=%d, len=%d\n", from, to, len);
-
         if(substring != NULL)
             free(substring);
         
@@ -192,13 +163,6 @@ int main(int argc, char *argv[]) {
 
         // Recibir texto a encriptar
         MPI_Recv(&substring[0], 16*len, MPI_CHAR, root, tag, MPI_COMM_WORLD, &status);
-        printf("Node: Recv text\n", from, to, len);
-
-        // printf("Node: \n");
-        // for(int i = 0; i < 16*len; ++i) {
-        //     printf("%c", substring[i]);
-        // }
-        // printf("\n\n");
 
     } else {
         unreachable;
@@ -208,25 +172,17 @@ int main(int argc, char *argv[]) {
 
     char* output = (char*) malloc(16 * len * sizeof(char));
 
-    printf("%d Init %d\n", current_id, len);
-
     int idx = 0;
     int idx_out = 0;
     vector<uint8> block(16, 0);
 
     for(int i = 0; i < len; ++i) {
-        if(i % int(1e4) == 0) {
-            printf("%d ", i);
-            fflush(stdout);
-        }
         uint tmp_len = 0;
         for(int j = 0; j < 16; ++j) block[j] = substring[idx++];
 
         vector<uint8> cipher = aes.EncryptECB(block, BLOCK_BYTES_LENGTH, key_hex, tmp_len);
         for(int j = 0; j < 16; ++j) output[idx_out++] = 0;//(char) cipher[j];
     }
-
-    printf("%d Final\n", current_id);
 
     if(is_root(current_id)) {
         cipher_by_tasks[root].reserve(16*len);
@@ -237,6 +193,25 @@ int main(int argc, char *argv[]) {
         MPI_Send(&output[0], 16*len, MPI_CHAR, root, tag, MPI_COMM_WORLD);
     } else {
         unreachable;
+    }
+
+    if(is_root(current_id)) {
+        for(int i = 0; i < tasks; ++i) {
+            if(i == root)
+                continue;
+            // Recibir datos encriptados
+            from = intervalo[i].from;
+            to = intervalo[i].to;
+            len = to - from + 1;
+
+            substring = (char *) malloc(16 * len * sizeof(char));
+            MPI_Recv(&substring[0], 16*len, MPI_CHAR, i, tag, MPI_COMM_WORLD, &status);
+
+            cipher_by_tasks[i].reserve(16*len);
+
+            for(int j = 0; j < 16*len; ++j)
+                cipher_by_tasks[i].push_back(substring[j]);
+        }
     }
 
     if(is_root(current_id)) {
@@ -254,12 +229,11 @@ int main(int argc, char *argv[]) {
                     x++;
             }
         }
-        if(is_root(current_id)) printf("Root Finally\n");
         // Guardar el cifrado en un archivo .bin
         write_file(ARCHIVO_SALIDA, cipher_text);
     }
 
-    printf("World %d %d\n", current_id, tasks);
+    printf("Process %d of %d\n", current_id, tasks);
 
     free(substring);
 

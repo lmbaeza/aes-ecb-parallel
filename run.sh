@@ -1,13 +1,16 @@
-%%writefile run.sh
+
 if [ "$1" = "--ecb-posix" ]; then
     g++ -D_DEFAULT_SOURCE -fopenmp -lm -Ofast -std=c++17 -o aes_ecb_posix src/aes_ecb_posix.cpp
     g++ -std=c++17 -o generate_data src/generate_data.cpp
     
     # Generar Datos
-    ./generate_data input.txt 32
+    ./generate_data input.txt 64
 
     # ./aes_ecb_posix [archivo de entrada] [archivo de salida] [numero de hilos]
     ./aes_ecb_posix input.txt output.bin 1
+    ./aes_ecb_posix input.txt output.bin 2
+    ./aes_ecb_posix input.txt output.bin 4
+    ./aes_ecb_posix input.txt output.bin 8
     ./aes_ecb_posix input.txt output.bin 16
 
     # Clean
@@ -20,10 +23,13 @@ elif [ "$1" = "--ecb-openmp" ]; then
     g++ -Ofast -std=c++17 -o generate_data src/generate_data.cpp
     
     # Generar Datos
-    ./generate_data input.txt 32
+    ./generate_data input.txt 64
 
     # ./aes_ecb_openmp [archivo de entrada] [archivo de salida] [numero de hilos]
     ./aes_ecb_openmp input.txt output.bin 1
+    ./aes_ecb_openmp input.txt output.bin 2
+    ./aes_ecb_openmp input.txt output.bin 4
+    ./aes_ecb_openmp input.txt output.bin 8
     ./aes_ecb_openmp input.txt output.bin 16
 
     # Clean
@@ -51,10 +57,32 @@ elif [ "$1" = "--cuda" ]; then
     # Clean
     rm -f aes_ecb_cuda
     rm -f generate_data
+elif [ "$1" = "--mpi" ]; then
+    mpiCC -lm -Ofast -std=c++17 -o aes_ecb_mpi src/aes_ecb_mpi.cpp 
+    g++ -Ofast -std=c++17 -o generate_data src/generate_data.cpp
+    
+    # Generar Datos
+    ./generate_data input.txt 64
+    
+    echo "MPI - 1 Nodo"
+    time mpirun -np 1 aes_ecb_mpi input.txt output1.bin
+
+    echo "MPI - 2 Nodo"
+    time mpirun -np 2 aes_ecb_mpi input.txt output1.bin
+
+    # echo "MPI - 4 Nodo"
+    # time mpirun -np 4 aes_ecb_mpi input.txt output1.bin
+
+    # echo "MPI - 8 Nodo"
+    # time mpirun -np 8 aes_ecb_mpi input.txt output1.bin
+
+    # Clean
+    rm -f aes_ecb_mpi
+    rm -f generate_data
 
 elif [ "$1" = "--clean" ]; then
     rm -f *.txt
     rm -f *.bin
 else
-    echo "Selecione un flag --ecb-posix o --ecb-openmp"
+    echo "Selecione un flag --ecb-posix, --ecb-openmp o --mpi"
 fi
