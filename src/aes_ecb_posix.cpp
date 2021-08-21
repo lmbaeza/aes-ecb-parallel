@@ -48,7 +48,7 @@ void build_hex(string &text, string &key) {
 
 void build_ranges(int text_size) {
     intervalo.resize(NUM_HILOS);
-    int blocks = (text_size+32-1)/32;
+    int blocks = (text_size+16-1)/16;
     cipher_text.resize(blocks);
     // Crear Intervalos
     int len = blocks/NUM_HILOS;
@@ -128,15 +128,16 @@ int main(int argc, char *argv[]) {
         pthread_join(thread[i], (void **)&retval);
     }
 
-    // Medir el tiempo
-    gettimeofday(&tval_after, NULL);
-    timersub(&tval_after, &tval_before, &tval_result);
-
-    // Mostrar el tiempo de ejecución
-    printf("Time elapsed: %ld.%06ld using %d threads\n", (long int) tval_result.tv_sec, (long int) tval_result.tv_usec, NUM_HILOS);
 
     // Guardar el cifrado en un archivo .bin
     write_file(ARCHIVO_SALIDA, cipher_text);
+
+    // Medir el tiempo
+    gettimeofday(&tval_after, NULL);
+    timersub(&tval_after, &tval_before, &tval_result);
+    
+    // Mostrar el tiempo de ejecución
+    printf("Time elapsed: %ld.%06ld using %d threads\n", (long int) tval_result.tv_sec, (long int) tval_result.tv_usec, NUM_HILOS);
     
     return 0;
 }
