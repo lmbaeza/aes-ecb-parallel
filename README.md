@@ -35,13 +35,13 @@ $ sudo chmod 777 run.sh
 ### Ejecutar `aes_ecb_posix.cpp`
 
 ```shell
-$ ./run.sh --ecb-posix
+$ ./run.sh --posix
 ```
 
 ### Ejecutar `aes_ecb_openmp.cpp`
 
 ```shell
-$ ./run.sh --ecb-openmp
+$ ./run.sh --openmp
 ```
 
 ### Ejecutar `Cuda`
@@ -63,4 +63,10 @@ for ((BLOCKS_GPU = 1 ; BLOCKS_GPU <= 64 ; BLOCKS_GPU *= 2));
             ./aes_ecb_cuda input.txt output.bin "$BLOCKS_GPU" "$THREADS_PER_BLOCK"
         done
     done
+```
+
+### Ejecutar `mppi`
+
+```shell
+$ ./run.sh --mpi
 ```

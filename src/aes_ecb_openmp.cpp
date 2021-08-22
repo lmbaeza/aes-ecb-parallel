@@ -48,7 +48,7 @@ void build_hex(string &text, string &key) {
 
 void build_ranges(int text_size) {
     intervalo.resize(NUM_HILOS);
-    int blocks = (text_size+32-1)/32;
+    int blocks = (text_size+16-1)/16;
     cipher_text.resize(blocks);
     // Crear Intervalos
     int len = blocks/NUM_HILOS;
