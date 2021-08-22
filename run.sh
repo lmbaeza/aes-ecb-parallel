@@ -1,5 +1,5 @@
 
-if [ "$1" = "--ecb-posix" ]; then
+if [ "$1" = "--posix" ]; then
     g++ -D_DEFAULT_SOURCE -fopenmp -lm -Ofast -std=c++17 -o aes_ecb_posix src/aes_ecb_posix.cpp
     g++ -std=c++17 -o generate_data src/generate_data.cpp
     
@@ -17,20 +17,27 @@ if [ "$1" = "--ecb-posix" ]; then
     rm -f aes_ecb_posix
     rm -f generate_data
 
-elif [ "$1" = "--ecb-openmp" ]; then
+elif [ "$1" = "--openmp" ]; then
     g++ -D_DEFAULT_SOURCE -fopenmp -lm -Ofast -std=c++17 -o aes_ecb_openmp src/aes_ecb_openmp.cpp
     
     g++ -Ofast -std=c++17 -o generate_data src/generate_data.cpp
     
-    # Generar Datos
-    ./generate_data input.txt 64
+    for MB in 1 16 64
+    do
+        # Generar Datos
+        echo "================================================"
+        ./generate_data input.txt "$MB"
 
-    # ./aes_ecb_openmp [archivo de entrada] [archivo de salida] [numero de hilos]
-    ./aes_ecb_openmp input.txt output.bin 1
-    ./aes_ecb_openmp input.txt output.bin 2
-    ./aes_ecb_openmp input.txt output.bin 4
-    ./aes_ecb_openmp input.txt output.bin 8
-    ./aes_ecb_openmp input.txt output.bin 16
+        echo "Generando fichero de texto de $MB MB"
+        echo ""
+
+        # ./aes_ecb_openmp [archivo de entrada] [archivo de salida] [numero de hilos]
+        ./aes_ecb_openmp input.txt output.bin 1
+        ./aes_ecb_openmp input.txt output.bin 2
+        ./aes_ecb_openmp input.txt output.bin 4
+        ./aes_ecb_openmp input.txt output.bin 8
+        ./aes_ecb_openmp input.txt output.bin 16
+    done
 
     # Clean
     rm -f aes_ecb_openmp
@@ -58,23 +65,40 @@ elif [ "$1" = "--cuda" ]; then
     rm -f aes_ecb_cuda
     rm -f generate_data
 elif [ "$1" = "--mpi" ]; then
+    # Compilar
     mpiCC -lm -Ofast -std=c++17 -o aes_ecb_mpi src/aes_ecb_mpi.cpp 
     g++ -Ofast -std=c++17 -o generate_data src/generate_data.cpp
-    
-    # Generar Datos
-    ./generate_data input.txt 64
-    
-    echo "MPI - 1 Nodo"
-    time mpirun -np 1 aes_ecb_mpi input.txt output1.bin
 
-    echo "MPI - 2 Nodo"
-    time mpirun -np 2 aes_ecb_mpi input.txt output1.bin
+    for MB in 1 16 64
+    do
+        # Generar Datos
+        echo "================================================"
+        ./generate_data input.txt "$MB"
 
-    # echo "MPI - 4 Nodo"
-    # time mpirun -np 4 aes_ecb_mpi input.txt output1.bin
+        echo "Generando fichero de texto de $MB MB"
+        echo ""
 
-    # echo "MPI - 8 Nodo"
-    # time mpirun -np 8 aes_ecb_mpi input.txt output1.bin
+        echo "MPI - 1 Nodo - texto de $MB MB"
+        time mpirun -np 1 aes_ecb_mpi input.txt output1.bin
+        echo " "
+
+
+        echo "MPI - 2 Nodo - texto de $MB MB"
+        time mpirun -np 2 aes_ecb_mpi input.txt output1.bin
+        echo " "
+
+
+        # echo "MPI - 4 Nodo - texto de $MB MB"
+        # time mpirun -np 4 aes_ecb_mpi input.txt output1.bin
+        # echo " "
+
+        # echo "MPI - 8 Nodo - texto de $MB MB"
+        # time mpirun -np 8 aes_ecb_mpi input.txt output1.bin
+
+        echo " "
+        echo " "
+        echo " "
+    done
 
     # Clean
     rm -f aes_ecb_mpi
@@ -84,5 +108,5 @@ elif [ "$1" = "--clean" ]; then
     rm -f *.txt
     rm -f *.bin
 else
-    echo "Selecione un flag --ecb-posix, --ecb-openmp o --mpi"
+    echo "Selecione un flag --posix, --openmp, --cuda o --mpi"
 fi
