@@ -49,21 +49,34 @@ elif [ "$1" = "--cuda" ]; then
     
     g++ -Ofast -std=c++17 -o generate_data src/generate_data.cpp
     
-    # Generar Datos
-    ./generate_data input.txt 64
-
-    for ((BLOCKS_GPU = 1 ; BLOCKS_GPU <= 64 ; BLOCKS_GPU *= 2));
+    for MB in 1 16 # 64
     do
-        for ((THREADS_PER_BLOCK = 1; THREADS_PER_BLOCK <= 64 ; THREADS_PER_BLOCK *= 2));
+        # Generar Datos
+        echo "================================================"
+        ./generate_data input.txt "$MB"
+
+        echo "Generando fichero de texto de $MB MB"
+        echo ""
+
+
+        for ((BLOCKS_GPU = 1 ; BLOCKS_GPU <= 64 ; BLOCKS_GPU *= 2));
         do
-            # ./aes_cuda [archivo de entrada] [archivo de salida] [numero de bloques] [numero de hilos por bloque]
-            ./aes_ecb_cuda input.txt output.bin "$BLOCKS_GPU" "$THREADS_PER_BLOCK"
+            for ((THREADS_PER_BLOCK = 1; THREADS_PER_BLOCK <= 64 ; THREADS_PER_BLOCK *= 2));
+            do
+                # ./aes_cuda [archivo de entrada] [archivo de salida] [numero de bloques] [numero de hilos por bloque]
+                ./aes_ecb_cuda input.txt output.bin "$BLOCKS_GPU" "$THREADS_PER_BLOCK"
+            done
         done
+
+        echo ""
+        echo ""
+        echo ""
     done
 
     # Clean
     rm -f aes_ecb_cuda
     rm -f generate_data
+
 elif [ "$1" = "--mpi" ]; then
     # Compilar
     mpiCC -lm -Ofast -std=c++17 -o aes_ecb_mpi src/aes_ecb_mpi.cpp 
