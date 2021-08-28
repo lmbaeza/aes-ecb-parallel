@@ -190,7 +190,7 @@ int main(int argc, char **argv) {
     cudaMemcpy(cipher_text, d_cipher_text, blocks*BLOCKS_SIZE*sizeof(uint8), cudaMemcpyDeviceToHost);
 
     double time_elapsed = stop - start;
-    printf("\nTime elapsed: %.8f sec using blocks_gpu=%d, threads_per_blocks=%d\n", time_elapsed, BLOQUES_GPU, HILOS_GPU);
+    printf("\n%.8f %d %d\n", time_elapsed, BLOQUES_GPU, HILOS_GPU);
     fflush(stdout);
 
     write_file(ARCHIVO_SALIDA, cipher_text, blocks);
