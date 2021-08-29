@@ -16,7 +16,7 @@ ssh-keygen -t rsa -b 4096 -C "user@email.com"
 cp id_rsa.pub authorized_keys
 
 # (Master)
-scp id_rsa id_rsa.pub user@cluster-node
+scp id_rsa id_rsa.pub user@cluster-node:
 
 # (Node)
 mv id_rsa id_rsa.pub ~/.ssh
